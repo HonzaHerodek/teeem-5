@@ -254,6 +254,7 @@ class _PostCardState extends State<PostCard> {
                   },
                   userId: widget.post.userId,
                   currentPostId: widget.post.id,
+                  userTraits: widget.post.userTraits,
                 ),
               ),
             ],
