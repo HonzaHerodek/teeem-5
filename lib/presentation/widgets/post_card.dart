@@ -226,7 +226,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     final remainingHeight = size - headerHeight;
     final indicatorTop = _isHeaderExpanded 
         ? headerHeight + (remainingHeight / 2) - 30 
-        : headerHeight - 24;
+        : headerHeight - 16; // Changed from -24 to -16 to add space
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),

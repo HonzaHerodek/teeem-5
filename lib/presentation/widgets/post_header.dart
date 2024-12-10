@@ -224,6 +224,9 @@ class _PostHeaderState extends State<PostHeader>
   bool get _showProfilePicture =>
       widget.currentStep == 0 || widget.currentStep == widget.steps.length - 1;
 
+  bool get _canExpand =>
+      widget.currentStep == 0 || widget.currentStep == widget.steps.length - 1;
+
   Widget _buildProfilePicture(double headerHeight, double postSize) {
     if (!_showProfilePicture || widget.userProfileImage == null)
       return Container();
@@ -292,7 +295,7 @@ class _PostHeaderState extends State<PostHeader>
             right: 0,
             child: Center(
               child: GestureDetector(
-                onTap: !widget.isExpanded ? () => widget.onExpandChanged(true) : null,
+                onTap: (!widget.isExpanded && _canExpand) ? () => widget.onExpandChanged(true) : null,
                 child: Container(
                   width: size,
                   height: size,
@@ -483,7 +486,7 @@ class _PostHeaderState extends State<PostHeader>
                 ),
               ),
             // Gesture detector for swipe to expand in collapsed state
-            if (!widget.isExpanded)
+            if (!widget.isExpanded && _canExpand)
               Positioned(
                 top: 0,
                 left: 0,
