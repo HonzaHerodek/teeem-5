@@ -39,7 +39,7 @@ class _PostCardState extends State<PostCard> {
     _allSteps = [
       PostStep(
         id: '${widget.post.id}_intro',
-        title: widget.post.title ?? 'Introduction',
+        title: widget.post.title,
         description: widget.post.description,
         type: StepType.text,
         content: {'text': widget.post.description},
@@ -50,7 +50,7 @@ class _PostCardState extends State<PostCard> {
         title: 'Rate and Share',
         description: 'Rate and share this post',
         type: StepType.text,
-        content: const {'text': ''},
+        content: {'text': ''},
       ),
     ];
   }
@@ -67,19 +67,18 @@ class _PostCardState extends State<PostCard> {
             children: [
               Column(
                 children: [
-                  if (widget.post.title != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        widget.post.title!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      widget.post.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
                   Text(
                     widget.post.description,
                     textAlign: TextAlign.center,
@@ -105,8 +104,8 @@ class _PostCardState extends State<PostCard> {
       );
     } else if (index == _allSteps.length - 1) {
       final userRating = widget.currentUserId != null
-          ? widget.post.getUserRating(widget.currentUserId!)
-          : null;
+          ? widget.post.getUserRating(widget.currentUserId!)?.value ?? 0.0
+          : 0.0;
       return SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -123,7 +122,7 @@ class _PostCardState extends State<PostCard> {
               ),
               const SizedBox(height: 16),
               RatingStars(
-                rating: userRating ?? 0,
+                rating: userRating,
                 onRatingChanged: widget.onRate,
                 isInteractive: true,
                 size: 32,
@@ -148,7 +147,7 @@ class _PostCardState extends State<PostCard> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Text(
-            step.content['text'] as String? ?? '',
+            step.getContentValue('text') ?? '',
             style: const TextStyle(color: Colors.white),
           ),
         ),

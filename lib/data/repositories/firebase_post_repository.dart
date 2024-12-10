@@ -39,7 +39,7 @@ class FirebasePostRepository implements PostRepository {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
-        return PostModel.fromJson(data);
+        return PostModel.fromJson(Map<String, dynamic>.from(data));
       }).toList();
     } catch (e) {
       throw AppException('Failed to fetch posts: ${e.toString()}');
@@ -55,7 +55,7 @@ class FirebasePostRepository implements PostRepository {
       }
       final data = doc.data()!;
       data['id'] = doc.id;
-      return PostModel.fromJson(data);
+      return PostModel.fromJson(Map<String, dynamic>.from(data));
     } catch (e) {
       throw AppException('Failed to fetch post: ${e.toString()}');
     }
@@ -65,7 +65,9 @@ class FirebasePostRepository implements PostRepository {
   Future<void> createPost(PostModel post) async {
     try {
       final docRef = _firestore.collection('posts').doc();
-      await docRef.set(post.toJson()..['id'] = docRef.id);
+      final postData = post.toJson();
+      postData['id'] = docRef.id;
+      await docRef.set(postData);
     } catch (e) {
       throw AppException('Failed to create post: ${e.toString()}');
     }
@@ -147,13 +149,12 @@ class FirebasePostRepository implements PostRepository {
   Future<void> updatePostStep(
       String postId, String stepId, Map<String, dynamic> data) async {
     try {
+      final stepData = {
+        'id': stepId,
+        ...data,
+      };
       await _firestore.collection('posts').doc(postId).update({
-        'steps': FieldValue.arrayUnion([
-          {
-            'id': stepId,
-            ...data,
-          }
-        ]),
+        'steps': FieldValue.arrayUnion([stepData]),
       });
     } catch (e) {
       throw AppException('Failed to update post step: ${e.toString()}');
@@ -171,7 +172,7 @@ class FirebasePostRepository implements PostRepository {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
-        return PostModel.fromJson(data);
+        return PostModel.fromJson(Map<String, dynamic>.from(data));
       }).toList();
     } catch (e) {
       throw AppException('Failed to search posts: ${e.toString()}');
@@ -194,7 +195,7 @@ class FirebasePostRepository implements PostRepository {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
-        return PostModel.fromJson(data);
+        return PostModel.fromJson(Map<String, dynamic>.from(data));
       }).toList();
     } catch (e) {
       throw AppException('Failed to get trending posts: ${e.toString()}');
@@ -238,7 +239,7 @@ class FirebasePostRepository implements PostRepository {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
-        return PostModel.fromJson(data);
+        return PostModel.fromJson(Map<String, dynamic>.from(data));
       }).toList();
     } catch (e) {
       throw AppException('Failed to get user feed: ${e.toString()}');
@@ -268,11 +269,12 @@ class FirebasePostRepository implements PostRepository {
       }
 
       final data = doc.data()!;
+      final likes = (data['likes'] as List<dynamic>?)?.length ?? 0;
       return {
-        'views': data['views'] ?? 0,
-        'likes': (data['likes'] as List?)?.length ?? 0,
-        'comments': data['commentsCount'] ?? 0,
-        'shares': data['sharesCount'] ?? 0,
+        'views': data['views'] as int? ?? 0,
+        'likes': likes,
+        'comments': data['commentsCount'] as int? ?? 0,
+        'shares': data['sharesCount'] as int? ?? 0,
       };
     } catch (e) {
       throw AppException('Failed to get post analytics: ${e.toString()}');
@@ -321,7 +323,8 @@ class FirebasePostRepository implements PostRepository {
       }
 
       final data = doc.data()!;
-      return List<String>.from(data['tags'] ?? []);
+      final tags = data['tags'] as List<dynamic>?;
+      return tags?.map((tag) => tag.toString()).toList() ?? [];
     } catch (e) {
       throw AppException('Failed to get post tags: ${e.toString()}');
     }

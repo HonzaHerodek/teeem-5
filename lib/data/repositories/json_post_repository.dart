@@ -36,7 +36,8 @@ class JsonPostRepository implements PostRepository {
       var posts = await Future.wait(
         files.whereType<File>().map((file) async {
           final content = await file.readAsString();
-          return PostModel.fromJson(json.decode(content));
+          final Map<String, dynamic> jsonData = json.decode(content) as Map<String, dynamic>;
+          return PostModel.fromJson(jsonData);
         }),
       );
 
@@ -47,8 +48,8 @@ class JsonPostRepository implements PostRepository {
 
       if (tags != null && tags.isNotEmpty) {
         posts = posts.where((post) {
-          final postTags = post.aiMetadata?['tags'] as List?;
-          return postTags?.any((tag) => tags.contains(tag)) ?? false;
+          final postTags = post.aiMetadata?['tags'] as List<dynamic>?;
+          return postTags?.any((tag) => tags.contains(tag.toString())) ?? false;
         }).toList();
       }
 
@@ -81,7 +82,8 @@ class JsonPostRepository implements PostRepository {
         throw Exception('Post not found');
       }
       final content = await file.readAsString();
-      return PostModel.fromJson(json.decode(content));
+      final Map<String, dynamic> jsonData = json.decode(content) as Map<String, dynamic>;
+      return PostModel.fromJson(jsonData);
     } catch (e) {
       throw Exception('Failed to fetch post: $e');
     }
@@ -213,7 +215,6 @@ class JsonPostRepository implements PostRepository {
     );
   }
 
-  // Implement other required methods from PostRepository...
   @override
   Future<void> reportPost(String postId, String userId, String reason) async {
     // Implementation for reporting posts could be added here
@@ -247,7 +248,8 @@ class JsonPostRepository implements PostRepository {
   @override
   Future<List<String>> getPostTags(String postId) async {
     final post = await getPostById(postId);
-    return List<String>.from(post.aiMetadata?['tags'] ?? []);
+    final tags = post.aiMetadata?['tags'] as List<dynamic>?;
+    return tags?.map((tag) => tag.toString()).toList() ?? [];
   }
 
   @override
@@ -273,10 +275,10 @@ class JsonPostRepository implements PostRepository {
       if (step.id == stepId) {
         return PostStep(
           id: stepId,
-          title: data['title'] ?? step.title,
-          description: data['description'] ?? step.description,
-          type: data['type'] ?? step.type,
-          content: data['content'] ?? step.content,
+          title: data['title'] as String? ?? step.title,
+          description: data['description'] as String? ?? step.description,
+          type: data['type'] as StepType? ?? step.type,
+          content: data['content'] as Map<String, dynamic>? ?? step.content,
         );
       }
       return step;

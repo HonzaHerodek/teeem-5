@@ -15,7 +15,7 @@ class ConnectivityService {
   final LoggerService _logger;
   final _connectivityController = StreamController<NetworkStatus>.broadcast();
   bool _isInitialized = false;
-  StreamSubscription<ConnectivityResult>? _subscription;
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
   NetworkStatus _lastStatus = NetworkStatus.offline;
 
   ConnectivityService({
@@ -39,8 +39,9 @@ class ConnectivityService {
 
     try {
       await checkConnectivity();
-      _subscription =
-          _connectivity.onConnectivityChanged.listen(_handleConnectivityChange);
+      _subscription = _connectivity.onConnectivityChanged.listen((results) {
+        _handleConnectivityChange(results.first);
+      });
       _isInitialized = true;
     } catch (e) {
       _logger.e('Failed to initialize connectivity service', error: e);
@@ -51,8 +52,8 @@ class ConnectivityService {
   /// Check current connectivity status
   Future<bool> checkConnectivity() async {
     try {
-      final result = await _connectivity.checkConnectivity();
-      final isConnected = _isConnected(result);
+      final results = await _connectivity.checkConnectivity();
+      final isConnected = _isConnected(results.first);
       _updateStatus(isConnected);
       return isConnected;
     } catch (e) {

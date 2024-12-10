@@ -21,8 +21,8 @@ class TraitModel {
     required this.name,
     required this.iconData,
     required this.value,
-    this.category = '',
-    this.displayOrder = 0,
+    required this.category,
+    required this.displayOrder,
   });
 
   factory TraitModel.fromJson(Map<String, dynamic> json) =>

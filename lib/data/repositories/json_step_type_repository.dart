@@ -21,8 +21,10 @@ class JsonStepTypeRepository implements StepTypeRepository {
       }
 
       final contents = await file.readAsString();
-      final List<dynamic> jsonList = json.decode(contents);
-      return jsonList.map((json) => StepTypeModel.fromJson(json)).toList();
+      final List<dynamic> jsonList = json.decode(contents) as List<dynamic>;
+      return jsonList
+          .map((json) => StepTypeModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       throw Exception('Failed to read step types: $e');
     }

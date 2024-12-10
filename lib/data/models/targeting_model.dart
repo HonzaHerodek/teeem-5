@@ -1,15 +1,15 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'targeting_model.g.dart';
+part 'package:myapp/data/models/targeting_model.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class TargetingCriteria {
   final List<String>? interests;
   final int? minAge;
   final int? maxAge;
   final List<String>? locations;
   final List<String>? languages;
-  final String? experienceLevel; // beginner, intermediate, advanced
+  final String? experienceLevel;
   final List<String>? skills;
   final List<String>? industries;
 
@@ -30,7 +30,6 @@ class TargetingCriteria {
   Map<String, dynamic> toJson() => _$TargetingCriteriaToJson(this);
 
   bool matches(TargetingCriteria userCriteria) {
-    // Check age range
     if (minAge != null &&
         userCriteria.minAge != null &&
         minAge! > userCriteria.minAge!) {
@@ -42,14 +41,12 @@ class TargetingCriteria {
       return false;
     }
 
-    // Check experience level
     if (experienceLevel != null &&
         userCriteria.experienceLevel != null &&
         experienceLevel != userCriteria.experienceLevel) {
       return false;
     }
 
-    // Check for any matching interests
     if (interests != null &&
         interests!.isNotEmpty &&
         userCriteria.interests != null) {
@@ -59,7 +56,6 @@ class TargetingCriteria {
       }
     }
 
-    // Check for any matching locations
     if (locations != null &&
         locations!.isNotEmpty &&
         userCriteria.locations != null) {
@@ -69,7 +65,6 @@ class TargetingCriteria {
       }
     }
 
-    // Check for any matching languages
     if (languages != null &&
         languages!.isNotEmpty &&
         userCriteria.languages != null) {
@@ -79,14 +74,12 @@ class TargetingCriteria {
       }
     }
 
-    // Check for any matching skills
     if (skills != null && skills!.isNotEmpty && userCriteria.skills != null) {
       if (!skills!.any((skill) => userCriteria.skills!.contains(skill))) {
         return false;
       }
     }
 
-    // Check for any matching industries
     if (industries != null &&
         industries!.isNotEmpty &&
         userCriteria.industries != null) {

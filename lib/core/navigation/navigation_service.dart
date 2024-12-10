@@ -55,43 +55,43 @@ class AppRoutes {
 Route<dynamic>? generateRoute(RouteSettings settings) {
   switch (settings.name) {
     case AppRoutes.traitsTest:
-      return MaterialPageRoute(
-        builder: (_) => const TraitsTestScreen(),
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => const TraitsTestScreen(),
         settings: settings,
       );
     case AppRoutes.splash:
-      return MaterialPageRoute(
-        builder: (_) => const SplashScreen(),
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => const SplashScreen(),
         settings: settings,
       );
     case AppRoutes.login:
-      return MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => const LoginScreen(),
         settings: settings,
       );
     case AppRoutes.signup:
-      return MaterialPageRoute(
-        builder: (_) => const SignupScreen(),
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => const SignupScreen(),
         settings: settings,
       );
     case AppRoutes.feed:
-      return MaterialPageRoute(
-        builder: (_) => const FeedScreen(),
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => const FeedScreen(),
         settings: settings,
       );
     case AppRoutes.profile:
-      return MaterialPageRoute(
-        builder: (_) => const ProfileScreen(),
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => const ProfileScreen(),
         settings: settings,
       );
     case AppRoutes.createPost:
-      return MaterialPageRoute(
-        builder: (_) => const CreatePostScreen(),
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => const CreatePostScreen(),
         settings: settings,
       );
     default:
-      return MaterialPageRoute(
-        builder: (_) => Scaffold(
+      return MaterialPageRoute<Widget>(
+        builder: (BuildContext context) => Scaffold(
           body: Center(
             child: Text('No route defined for ${settings.name}'),
           ),

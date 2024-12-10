@@ -106,7 +106,31 @@ class FirebaseRatingService extends RatingService {
       }
 
       final post = PostModel.fromJson(postDoc.data()!);
-      return post.ratingStats;
+      final ratings = post.ratings;
+      
+      if (ratings.isEmpty) {
+        return RatingStats(
+          averageRating: 0,
+          totalRatings: 0,
+          ratingDistribution: {},
+        );
+      }
+
+      final totalRatings = ratings.length;
+      final sumRatings = ratings.fold<double>(0, (sum, rating) => sum + rating.value);
+      final averageRating = sumRatings / totalRatings;
+
+      final distribution = <int, int>{};
+      for (final rating in ratings) {
+        final value = rating.value.round();
+        distribution[value] = (distribution[value] ?? 0) + 1;
+      }
+
+      return RatingStats(
+        averageRating: averageRating,
+        totalRatings: totalRatings,
+        ratingDistribution: distribution,
+      );
     } catch (e) {
       logger.e('Error getting post rating stats: $e');
       rethrow;
@@ -122,7 +146,31 @@ class FirebaseRatingService extends RatingService {
       }
 
       final user = UserModel.fromJson(userDoc.data()!);
-      return user.ratingStats;
+      final ratings = user.ratings;
+      
+      if (ratings.isEmpty) {
+        return RatingStats(
+          averageRating: 0,
+          totalRatings: 0,
+          ratingDistribution: {},
+        );
+      }
+
+      final totalRatings = ratings.length;
+      final sumRatings = ratings.fold<double>(0, (sum, rating) => sum + rating.value);
+      final averageRating = sumRatings / totalRatings;
+
+      final distribution = <int, int>{};
+      for (final rating in ratings) {
+        final value = rating.value.round();
+        distribution[value] = (distribution[value] ?? 0) + 1;
+      }
+
+      return RatingStats(
+        averageRating: averageRating,
+        totalRatings: totalRatings,
+        ratingDistribution: distribution,
+      );
     } catch (e) {
       logger.e('Error getting user rating stats: $e');
       rethrow;

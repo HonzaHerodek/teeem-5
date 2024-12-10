@@ -9,7 +9,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final UserRepository _userRepository;
-  StreamSubscription? _authStateSubscription;
+  StreamSubscription<bool>? _authStateSubscription;
 
   AuthBloc({
     required AuthRepository authRepository,

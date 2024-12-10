@@ -5,7 +5,6 @@ import '../../domain/repositories/post_repository.dart';
 import '../../core/di/injection.dart';
 import '../../core/navigation/navigation_service.dart';
 import 'rating_stars.dart';
-import 'user_avatar.dart';
 import 'user_traits.dart';
 
 class PostHeader extends StatefulWidget {
@@ -171,7 +170,7 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      post.title ?? 'Post',
+                      post.title,
                       textAlign: TextAlign.center,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -215,10 +214,7 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
     );
   }
 
-  bool get _showProfilePicture {
-    return widget.currentStep == 0 ||
-        widget.currentStep == widget.steps.length - 1;
-  }
+  bool get _showProfilePicture => widget.currentStep == 0 || widget.currentStep == widget.steps.length - 1;
 
   Widget _buildProfilePicture(double headerHeight, double postSize) {
     if (!_showProfilePicture || widget.userProfileImage == null) return Container();

@@ -43,6 +43,7 @@ class TestDataService {
         status: PostStatus.active,
         ratings: ratings,
         userTraits: traits,
+        updatedAt: DateTime.now().subtract(Duration(days: index)),
       );
     });
   }
@@ -61,5 +62,29 @@ class TestDataService {
         },
       ),
     );
+  }
+
+  static Map<String, dynamic> generateTestAnalytics() {
+    return {
+      'totalViews': 1000,
+      'totalLikes': 500,
+      'totalComments': 250,
+      'averageRating': 4.5,
+      'totalPosts': 25,
+      'topCategories': [
+        {'name': 'cooking', 'count': 10},
+        {'name': 'fitness', 'count': 8},
+        {'name': 'diy', 'count': 7},
+      ],
+      'engagement': {
+        'daily': 85,
+        'weekly': 450,
+        'monthly': 1800,
+      },
+      'userGrowth': {
+        'followers': 300,
+        'following': 250,
+      },
+    };
   }
 }

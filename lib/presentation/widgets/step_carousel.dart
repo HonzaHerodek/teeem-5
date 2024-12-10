@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/models/post_model.dart';
+import '../../data/models/post_model.dart' show PostStep, StepType;
 
 class StepCarousel extends StatefulWidget {
   final List<PostStep> steps;
@@ -33,7 +33,7 @@ class _StepCarouselState extends State<StepCarousel> {
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
-            step.content['text'] as String? ?? '',
+            step.getContentValue('text') ?? '',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -42,7 +42,7 @@ class _StepCarouselState extends State<StepCarousel> {
         );
       case StepType.image:
         return Image.network(
-          step.content['url'] as String? ?? '',
+          step.getContentValue('url') ?? '',
           fit: BoxFit.cover,
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
@@ -116,7 +116,7 @@ class _StepCarouselState extends State<StepCarousel> {
             ),
             padding: const EdgeInsets.all(12),
             child: Text(
-              step.content['code'] as String? ?? '',
+              step.getContentValue('code') ?? '',
               style: const TextStyle(
                 color: Colors.white,
                 fontFamily: 'monospace',

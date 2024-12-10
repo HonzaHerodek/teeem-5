@@ -1,118 +1,174 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:flutter/foundation.dart';
-import 'targeting_model.dart';
-import 'user_model.dart';
-import 'rating_model.dart';
-import 'trait_model.dart';
+import 'package:json_annotation/json_annotation.dart';
+import './rating_model.dart';
+import './targeting_model.dart';
+import './trait_model.dart';
 
-part 'post_model.g.dart';
+part './post_model.g.dart';
 
-@JsonEnum(alwaysCreate: true)
 enum StepType {
+  @JsonValue('text')
   text,
+  @JsonValue('image')
   image,
+  @JsonValue('video')
   video,
+  @JsonValue('audio')
   audio,
-  quiz,
+  @JsonValue('document')
+  document,
+  @JsonValue('link')
+  link,
+  @JsonValue('code')
   code,
+  @JsonValue('quiz')
+  quiz,
+  @JsonValue('ar')
   ar,
-  vr,
+  @JsonValue('vr')
+  vr
 }
 
-@JsonEnum(alwaysCreate: true)
 enum PostStatus {
+  @JsonValue('draft')
   draft,
-  pending,
-  active,
+  @JsonValue('published')
+  published,
+  @JsonValue('archived')
   archived,
+  @JsonValue('deleted')
   deleted,
+  @JsonValue('flagged')
+  flagged,
+  @JsonValue('active')
+  active,
 }
 
+@immutable
 @JsonSerializable(explicitToJson: true)
 class PostStep {
   final String id;
-  final String title;
-  final String description;
-  @JsonKey(defaultValue: StepType.text)
+  @JsonKey(
+    fromJson: _stepTypeFromJson,
+    toJson: _stepTypeToJson,
+  )
   final StepType type;
-  final Map<String, dynamic> content;
+  final String title;
+  final String? description;
+  final Map<String, dynamic>? content;
+  final String? imageUrl;
+  final String? videoUrl;
+  final String? audioUrl;
+  final String? documentUrl;
+  final String? linkUrl;
+  final String? codeSnippet;
+  final String? codeLanguage;
+  final String? codeOutput;
+  final String? codeError;
+  final String? codeStatus;
+  final String? codeTimestamp;
+  final String? codeUserId;
+  final String? codeUsername;
+  final String? codeUserProfileImage;
 
   const PostStep({
     required this.id,
-    required this.title,
-    required this.description,
     required this.type,
-    required this.content,
+    required this.title,
+    this.description,
+    this.content,
+    this.imageUrl,
+    this.videoUrl,
+    this.audioUrl,
+    this.documentUrl,
+    this.linkUrl,
+    this.codeSnippet,
+    this.codeLanguage,
+    this.codeOutput,
+    this.codeError,
+    this.codeStatus,
+    this.codeTimestamp,
+    this.codeUserId,
+    this.codeUsername,
+    this.codeUserProfileImage,
   });
+
+  static StepType _stepTypeFromJson(String value) =>
+      StepType.values.firstWhere((e) => e.toString().split('.').last == value);
+
+  static String _stepTypeToJson(StepType type) =>
+      type.toString().split('.').last;
 
   factory PostStep.fromJson(Map<String, dynamic> json) =>
       _$PostStepFromJson(json);
 
   Map<String, dynamic> toJson() => _$PostStepToJson(this);
+
+  String? getContentValue(String key) {
+    if (content == null) return null;
+    final value = content![key];
+    return value?.toString();
+  }
 }
 
+@immutable
 @JsonSerializable(explicitToJson: true)
 class PostModel {
   final String id;
   final String userId;
   final String username;
-  final String? userProfileImage;
-  final String? title;
+  final String userProfileImage;
+  final String title;
   final String description;
-  @JsonKey(defaultValue: <PostStep>[])
   final List<PostStep> steps;
   final DateTime createdAt;
   final DateTime updatedAt;
-  @JsonKey(defaultValue: <String>[])
   final List<String> likes;
-  @JsonKey(defaultValue: <String>[])
   final List<String> comments;
-  @JsonKey(defaultValue: PostStatus.active)
+  @JsonKey(defaultValue: PostStatus.draft)
   final PostStatus status;
-  final Map<String, dynamic>? aiMetadata;
-  final TargetingCriteria? targetingCriteria;
-  @JsonKey(defaultValue: <RatingModel>[])
   final List<RatingModel> ratings;
-  @JsonKey(defaultValue: <TraitModel>[])
   final List<TraitModel> userTraits;
+  final TargetingCriteria? targetingCriteria;
+  final Map<String, dynamic>? aiMetadata;
 
   const PostModel({
     required this.id,
     required this.userId,
     required this.username,
-    this.userProfileImage,
-    this.title,
+    required this.userProfileImage,
+    required this.title,
     required this.description,
-    List<PostStep>? steps,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    List<String>? likes,
-    List<String>? comments,
-    PostStatus? status,
-    this.aiMetadata,
+    required this.steps,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.likes,
+    required this.comments,
+    required this.status,
+    required this.ratings,
+    required this.userTraits,
     this.targetingCriteria,
-    List<RatingModel>? ratings,
-    List<TraitModel>? userTraits,
-  })  : steps = steps ?? const [],
-        createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now(),
-        likes = likes ?? const [],
-        comments = comments ?? const [],
-        ratings = ratings ?? const [],
-        userTraits = userTraits ?? const [],
-        status = status ?? PostStatus.active;
+    this.aiMetadata,
+  });
+
+  RatingStats get ratingStats => RatingStats.fromRatings(ratings);
+
+  RatingModel? getUserRating(String userId) {
+    return ratings.cast<RatingModel?>().firstWhere(
+          (rating) => rating?.userId == userId,
+          orElse: () => null,
+        );
+  }
+
+  bool isTargetedTo(TargetingCriteria userCriteria) {
+    if (targetingCriteria == null) return true;
+    return targetingCriteria!.matches(userCriteria);
+  }
 
   factory PostModel.fromJson(Map<String, dynamic> json) =>
       _$PostModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$PostModelToJson(this);
-
-  RatingStats get ratingStats => RatingStats.fromRatings(ratings);
-
-  double? getUserRating(String userId) {
-    final userRating = ratings.where((r) => r.userId == userId).firstOrNull;
-    return userRating?.value;
-  }
 
   PostModel copyWith({
     String? id,
@@ -127,10 +183,10 @@ class PostModel {
     List<String>? likes,
     List<String>? comments,
     PostStatus? status,
-    Map<String, dynamic>? aiMetadata,
-    TargetingCriteria? targetingCriteria,
     List<RatingModel>? ratings,
     List<TraitModel>? userTraits,
+    TargetingCriteria? targetingCriteria,
+    Map<String, dynamic>? aiMetadata,
   }) {
     return PostModel(
       id: id ?? this.id,
@@ -141,49 +197,14 @@ class PostModel {
       description: description ?? this.description,
       steps: steps ?? this.steps,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? DateTime.now(),
+      updatedAt: updatedAt ?? this.updatedAt,
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
       status: status ?? this.status,
-      aiMetadata: aiMetadata ?? this.aiMetadata,
-      targetingCriteria: targetingCriteria ?? this.targetingCriteria,
       ratings: ratings ?? this.ratings,
       userTraits: userTraits ?? this.userTraits,
-    );
-  }
-
-  bool isTargetedTo(UserModel user) {
-    if (targetingCriteria == null || user.targetingCriteria == null) {
-      return true; // If no targeting criteria set, post is visible to everyone
-    }
-    return targetingCriteria!.matches(user.targetingCriteria!);
-  }
-}
-
-@JsonSerializable()
-class RatingStats {
-  final double averageRating;
-  final int totalRatings;
-
-  const RatingStats({
-    required this.averageRating,
-    required this.totalRatings,
-  });
-
-  factory RatingStats.fromJson(Map<String, dynamic> json) =>
-      _$RatingStatsFromJson(json);
-
-  Map<String, dynamic> toJson() => _$RatingStatsToJson(this);
-
-  factory RatingStats.fromRatings(List<RatingModel> ratings) {
-    if (ratings.isEmpty) {
-      return const RatingStats(averageRating: 0, totalRatings: 0);
-    }
-
-    final total = ratings.fold<double>(0, (sum, r) => sum + r.value);
-    return RatingStats(
-      averageRating: total / ratings.length,
-      totalRatings: ratings.length,
+      targetingCriteria: targetingCriteria ?? this.targetingCriteria,
+      aiMetadata: aiMetadata ?? this.aiMetadata,
     );
   }
 }
