@@ -27,12 +27,15 @@ class PostCard extends StatefulWidget {
   State<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends State<PostCard> {
+class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin {
   int _currentStep = 0;
   bool _isHeaderExpanded = false;
   bool _showContent = true;
   bool _isAnimatingOut = false;
+  bool _showMiniatures = false;
   late List<PostStep> _allSteps;
+  late AnimationController _miniatureAnimation;
+  static const double _shrunkHeaderHeight = 60.0;
 
   @override
   void initState() {
@@ -54,32 +57,76 @@ class _PostCardState extends State<PostCard> {
         content: {'text': ''},
       ),
     ];
+
+    _miniatureAnimation = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
   }
 
-  Widget _buildStepContent(int index) {
+  @override
+  void dispose() {
+    _miniatureAnimation.dispose();
+    super.dispose();
+  }
+
+  void _handleHeaderExpandChange(bool expanded) {
+    setState(() {
+      _isHeaderExpanded = expanded;
+      _showMiniatures = expanded;
+      if (expanded) {
+        _showContent = false;
+        _isAnimatingOut = true;
+        _miniatureAnimation.forward();
+      } else {
+        _isAnimatingOut = false;
+        _showContent = false;
+        _miniatureAnimation.reverse();
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (mounted && !_isHeaderExpanded) {
+            setState(() => _showContent = true);
+          }
+        });
+      }
+    });
+  }
+
+  void _handleTransformToMiniatures() {
+    setState(() => _showMiniatures = true);
+  }
+
+  void _handleTransformToDots() {
+    setState(() => _showMiniatures = false);
+  }
+
+  bool get _shouldShowHeader {
+    return _currentStep == 0 || _currentStep == _allSteps.length - 1;
+  }
+
+  Widget _buildStepContent(int index, BoxConstraints constraints) {
     if (index == 0) {
       final isLiked = widget.currentUserId != null &&
           widget.post.likes.contains(widget.currentUserId);
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
+      return Stack(
+        children: [
+          Positioned(
+            top: constraints.maxHeight * 0.4,
+            left: 0,
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      widget.post.title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Text(
+                    widget.post.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 16),
                   Text(
                     widget.post.description,
                     textAlign: TextAlign.center,
@@ -90,8 +137,14 @@ class _PostCardState extends State<PostCard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              IconButton(
+            ),
+          ),
+          Positioned(
+            bottom: 24,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: IconButton(
                 icon: Icon(
                   isLiked ? Icons.favorite : Icons.favorite_border,
                   color: isLiked ? Colors.red : Colors.white,
@@ -99,56 +152,66 @@ class _PostCardState extends State<PostCard> {
                 ),
                 onPressed: widget.onLike,
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     } else if (index == _allSteps.length - 1) {
       final userRating = widget.currentUserId != null
           ? widget.post.getUserRating(widget.currentUserId!)?.value ?? 0.0
           : 0.0;
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Rate this post',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 40), // Adjust visual center
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Rate this post',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      RatingStars(
+                        rating: userRating,
+                        onRatingChanged: widget.onRate,
+                        isInteractive: true,
+                        size: 32,
+                        color: Colors.amber,
+                      ),
+                      const SizedBox(height: 24),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.share_outlined,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        onPressed: widget.onShare,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              RatingStars(
-                rating: userRating,
-                onRatingChanged: widget.onRate,
-                isInteractive: true,
-                size: 32,
-                color: Colors.amber,
-              ),
-              const SizedBox(height: 24),
-              IconButton(
-                icon: const Icon(
-                  Icons.share_outlined,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                onPressed: widget.onShare,
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     } else {
       final step = widget.post.steps[index - 1];
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Center(
           child: Text(
             step.getContentValue('text') ?? '',
+            textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white),
           ),
         ),
@@ -159,7 +222,11 @@ class _PostCardState extends State<PostCard> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size.width - 32;
-    final headerHeight = _isHeaderExpanded ? size * 0.75 : 120.0;
+    final headerHeight = _isHeaderExpanded ? size * 0.75 : _shrunkHeaderHeight;
+    final remainingHeight = size - headerHeight;
+    final indicatorTop = _isHeaderExpanded 
+        ? headerHeight + (remainingHeight / 2) - 30 
+        : headerHeight - 24;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
@@ -207,100 +274,75 @@ class _PostCardState extends State<PostCard> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Content
+              // Content layer with clipping
               if (!_isHeaderExpanded || _isAnimatingOut)
-                AnimatedPostContent(
-                  isVisible: _showContent,
-                  isAnimatingOut: _isAnimatingOut,
-                  topOffset: headerHeight,
-                  onAnimationComplete: _isAnimatingOut
-                      ? () => setState(() {
-                            _isAnimatingOut = false;
-                            _showContent = false;
-                          })
-                      : null,
-                  child: PageView.builder(
-                    itemCount: _allSteps.length,
-                    onPageChanged: (index) =>
-                        setState(() => _currentStep = index),
-                    itemBuilder: (context, index) => _buildStepContent(index),
-                  ),
-                ),
-              // Header
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: PostHeader(
-                  username: widget.post.username,
-                  userProfileImage: widget.post.userProfileImage,
-                  steps: _allSteps,
-                  currentStep: _currentStep,
-                  isExpanded: _isHeaderExpanded,
-                  onExpandChanged: (expanded) {
-                    setState(() {
-                      _isHeaderExpanded = expanded;
-                      if (expanded) {
-                        _showContent = false;
-                        _isAnimatingOut = true;
-                      } else {
-                        _isAnimatingOut = false;
-                        // Start with content hidden
-                        _showContent = false;
-                        // Show content after a tiny delay to ensure animation starts with header
-                        Future.delayed(const Duration(milliseconds: 50), () {
-                          if (mounted && !_isHeaderExpanded) {
-                            setState(() => _showContent = true);
-                          }
-                        });
-                      }
-                    });
-                  },
-                  userId: widget.post.userId,
-                  currentPostId: widget.post.id,
-                  userTraits: widget.post.userTraits,
-                  rating: widget.post.ratingStats.averageRating,
-                ),
-              ),
-              // Step dots (only visible when header is shrinked)
-              if (!_isHeaderExpanded)
-                Positioned(
-                  top: headerHeight - 32,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.5),
-                          Colors.transparent,
-                        ],
+                Positioned.fill(
+                  child: ClipRect(
+                    child: AnimatedPostContent(
+                      isVisible: _showContent,
+                      isAnimatingOut: _isAnimatingOut,
+                      topOffset: 0,
+                      onAnimationComplete: _isAnimatingOut
+                          ? () => setState(() {
+                                _isAnimatingOut = false;
+                                _showContent = false;
+                              })
+                          : null,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return PageView.builder(
+                            itemCount: _allSteps.length,
+                            onPageChanged: (index) =>
+                                setState(() => _currentStep = index),
+                            itemBuilder: (context, index) => 
+                                _buildStepContent(index, constraints),
+                          );
+                        },
                       ),
                     ),
-                    child: StepDots(
-                      steps: _allSteps,
-                      currentStep: _currentStep,
-                      animation: const AlwaysStoppedAnimation(1.0),
-                    ),
                   ),
                 ),
-              // Step miniatures (visible when header is expanded)
-              if (_isHeaderExpanded && !_showContent)
+              // Overlay layer for header and indicators
+              if (_shouldShowHeader)
                 Positioned(
-                  top: headerHeight + 16,
+                  top: 0,
                   left: 0,
                   right: 0,
-                  bottom: 16,
-                  child: Center(
-                    child: StepMiniatures(
-                      steps: _allSteps,
-                      currentStep: _currentStep,
-                      animation: const AlwaysStoppedAnimation(1.0),
-                    ),
+                  height: headerHeight,
+                  child: PostHeader(
+                    username: widget.post.username,
+                    userProfileImage: widget.post.userProfileImage,
+                    steps: _allSteps,
+                    currentStep: _currentStep,
+                    isExpanded: _isHeaderExpanded,
+                    onExpandChanged: _handleHeaderExpandChange,
+                    userId: widget.post.userId,
+                    currentPostId: widget.post.id,
+                    userTraits: widget.post.userTraits,
+                    rating: widget.post.ratingStats.averageRating,
                   ),
                 ),
+              // Step indicators layer
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                top: indicatorTop,
+                left: 0,
+                right: 0,
+                child: _isHeaderExpanded || _showMiniatures
+                    ? StepMiniatures(
+                        steps: _allSteps,
+                        currentStep: _currentStep,
+                        onHeaderExpandChanged: _handleHeaderExpandChange,
+                        onTransformToDots: _handleTransformToDots,
+                      )
+                    : StepDots(
+                        steps: _allSteps,
+                        currentStep: _currentStep,
+                        onHeaderExpandChanged: _handleHeaderExpandChange,
+                        onTransformToMiniatures: _handleTransformToMiniatures,
+                      ),
+              ),
             ],
           ),
         ),
