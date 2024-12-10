@@ -28,6 +28,8 @@ class StepTypeModel {
   final String name;
   final String description;
   final String icon;
+  @JsonKey(required: true)  // Explicitly mark color as required for JSON
+  final String color;
   final List<StepTypeOption> options;
   final Map<String, dynamic>? metadata;
   final DateTime createdAt;
@@ -38,6 +40,7 @@ class StepTypeModel {
     required this.name,
     required this.description,
     required this.icon,
+    required this.color,
     required this.options,
     this.metadata,
     DateTime? createdAt,

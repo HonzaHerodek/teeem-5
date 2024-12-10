@@ -4,7 +4,7 @@ import './rating_model.dart';
 import './targeting_model.dart';
 import './trait_model.dart';
 
-part './post_model.g.dart';
+part 'post_model.g.dart';
 
 enum StepType {
   @JsonValue('text')

@@ -39,8 +39,7 @@ class PostHeader extends StatefulWidget {
   State<PostHeader> createState() => _PostHeaderState();
 }
 
-class _PostHeaderState extends State<PostHeader>
-    with SingleTickerProviderStateMixin {
+class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateMixin {
   List<PostModel>? _otherPosts;
   bool _isLoadingPosts = false;
   static const double _miniatureSize = 80.0;
@@ -104,8 +103,7 @@ class _PostHeaderState extends State<PostHeader>
 
       if (mounted) {
         setState(() {
-          _otherPosts =
-              posts.where((post) => post.id != widget.currentPostId).toList();
+          _otherPosts = posts.where((post) => post.id != widget.currentPostId).toList();
           _isLoadingPosts = false;
         });
       }
@@ -200,8 +198,7 @@ class _PostHeaderState extends State<PostHeader>
                   final starValue = index + 1;
                   final isHalfStar = post.ratingStats.averageRating > index &&
                       post.ratingStats.averageRating < starValue;
-                  final isFullStar =
-                      post.ratingStats.averageRating >= starValue;
+                  final isFullStar = post.ratingStats.averageRating >= starValue;
 
                   return Icon(
                     isFullStar
@@ -228,8 +225,9 @@ class _PostHeaderState extends State<PostHeader>
       widget.currentStep == 0 || widget.currentStep == widget.steps.length - 1;
 
   Widget _buildProfilePicture(double headerHeight, double postSize) {
-    if (!_showProfilePicture || widget.userProfileImage == null)
+    if (!_showProfilePicture || widget.userProfileImage == null) {
       return Container();
+    }
 
     return AnimatedBuilder(
       animation: _controller,
@@ -393,8 +391,7 @@ class _PostHeaderState extends State<PostHeader>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.vertical(
                         top: const Radius.circular(999),
-                        bottom: Radius.circular(
-                            widget.isExpanded ? postSize / 2 : 0),
+                        bottom: Radius.circular(widget.isExpanded ? postSize / 2 : 0),
                       ),
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -420,14 +417,11 @@ class _PostHeaderState extends State<PostHeader>
                     child: Column(
                       children: [
                         const SizedBox(height: 32),
-                        // Rating stars at the top with count
                         Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: _buildRatingWithCount(),
                         ),
                         const Spacer(),
-                        // User traits in the middle
                         if (widget.userTraits.isNotEmpty)
                           UserTraits(
                             traits: widget.userTraits,
@@ -437,7 +431,6 @@ class _PostHeaderState extends State<PostHeader>
                             spacing: 8,
                           ),
                         const Spacer(),
-                        // Other posts at the bottom
                         if (_otherPosts != null && _otherPosts!.isNotEmpty)
                           SizedBox(
                             height: 100,
@@ -446,10 +439,8 @@ class _PostHeaderState extends State<PostHeader>
                               controller: _scrollController,
                               physics: const BouncingScrollPhysics(),
                               itemCount: _otherPosts!.length,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              itemBuilder: (context, index) =>
-                                  _buildOtherPostThumbnail(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemBuilder: (context, index) => _buildOtherPostThumbnail(
                                 _otherPosts![index],
                               ),
                             ),
@@ -459,8 +450,7 @@ class _PostHeaderState extends State<PostHeader>
                             height: 100,
                             child: Center(
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             ),
                           ),
@@ -470,7 +460,6 @@ class _PostHeaderState extends State<PostHeader>
                   );
                 },
               ),
-            // Gesture detector for vertical swipes
             if (widget.isExpanded)
               Positioned.fill(
                 child: GestureDetector(
@@ -479,19 +468,18 @@ class _PostHeaderState extends State<PostHeader>
                   },
                   onVerticalDragUpdate: (details) {
                     final deltaY = details.globalPosition.dy - _dragStartY;
-                    if (deltaY < -20) { // Upward swipe
+                    if (deltaY < -20) {
                       widget.onExpandChanged(false);
                     }
                   },
                 ),
               ),
-            // Gesture detector for swipe to expand in collapsed state
             if (!widget.isExpanded && _canExpand)
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
-                height: 120, // Area for vertical swipe detection including dots
+                height: 120,
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onVerticalDragStart: (details) {
@@ -499,7 +487,7 @@ class _PostHeaderState extends State<PostHeader>
                   },
                   onVerticalDragUpdate: (details) {
                     final deltaY = details.globalPosition.dy - _dragStartY;
-                    if (deltaY > 20) { // Downward swipe
+                    if (deltaY > 20) {
                       widget.onExpandChanged(true);
                     }
                   },

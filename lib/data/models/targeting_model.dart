@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'package:myapp/data/models/targeting_model.g.dart';
+part 'targeting_model.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class TargetingCriteria {

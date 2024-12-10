@@ -41,48 +41,90 @@ class _StepCarouselState extends State<StepCarousel> {
           ),
         );
       case StepType.image:
-        return Image.network(
-          step.getContentValue('url') ?? '',
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.network(
+              step.getContentValue('imageUrl') ?? '',
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(
+                  child: Icon(
+                    Icons.error_outline,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                );
+              },
+            ),
+            if (step.getContentValue('caption') != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  step.getContentValue('caption')!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
               ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return const Center(
-              child: Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 48,
-              ),
-            );
-          },
+          ],
         );
       case StepType.video:
-        // TODO: Implement video player
-        return const Center(
-          child: Icon(
-            Icons.play_circle_outline,
-            color: Colors.white,
-            size: 48,
-          ),
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.play_circle_outline,
+              color: Colors.white,
+              size: 48,
+            ),
+            if (step.getContentValue('description') != null)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  step.getContentValue('description')!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+          ],
         );
       case StepType.audio:
-        // TODO: Implement audio player
-        return const Center(
-          child: Icon(
-            Icons.audiotrack,
-            color: Colors.white,
-            size: 48,
-          ),
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.audiotrack,
+              color: Colors.white,
+              size: 48,
+            ),
+            if (step.getContentValue('description') != null)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  step.getContentValue('description')!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+          ],
         );
       case StepType.quiz:
         return Center(
@@ -96,13 +138,27 @@ class _StepCarouselState extends State<StepCarousel> {
               ),
               const SizedBox(height: 16),
               Text(
-                step.title,
+                step.getContentValue('question') ?? '',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 16),
+              ...(step.getContentValue('options') as List<dynamic>? ?? [])
+                  .map((option) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text(
+                          option.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ))
+                  .toList(),
             ],
           ),
         );
@@ -115,13 +171,30 @@ class _StepCarouselState extends State<StepCarousel> {
               borderRadius: BorderRadius.circular(8),
             ),
             padding: const EdgeInsets.all(12),
-            child: Text(
-              step.getContentValue('code') ?? '',
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'monospace',
-                fontSize: 14,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (step.getContentValue('language') != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      step.getContentValue('language')!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                Text(
+                  step.getContentValue('code') ?? '',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'monospace',
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -145,6 +218,70 @@ class _StepCarouselState extends State<StepCarousel> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              if (step.getContentValue('instructions') != null)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    step.getContentValue('instructions')!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
+          ),
+        );
+      case StepType.document:
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.description,
+                color: Colors.white,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              if (step.getContentValue('summary') != null)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    step.getContentValue('summary')!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
+          ),
+        );
+      case StepType.link:
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.link,
+                color: Colors.white,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              if (step.getContentValue('description') != null)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    step.getContentValue('description')!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
             ],
           ),
         );

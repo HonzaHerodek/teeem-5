@@ -93,6 +93,7 @@ class JsonStepTypeRepository implements StepTypeRepository {
           name: 'Text',
           description: 'A simple text step',
           icon: 'text_fields',
+          color: '#4CAF50', // Green for text
           options: [
             StepTypeOption(
               id: 'content',
@@ -107,6 +108,7 @@ class JsonStepTypeRepository implements StepTypeRepository {
           name: 'Image',
           description: 'An image with caption',
           icon: 'image',
+          color: '#2196F3', // Blue for images
           options: [
             StepTypeOption(
               id: 'imageUrl',
@@ -125,6 +127,7 @@ class JsonStepTypeRepository implements StepTypeRepository {
           name: 'Code',
           description: 'Code snippet with syntax highlighting',
           icon: 'code',
+          color: '#9C27B0', // Purple for code
           options: [
             StepTypeOption(
               id: 'language',

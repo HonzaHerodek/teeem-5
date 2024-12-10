@@ -12,7 +12,7 @@ TraitModel _$TraitModelFromJson(Map<String, dynamic> json) => TraitModel(
       iconData: json['icon_data'] as String,
       value: json['value'] as String,
       category: json['category'] as String? ?? '',
-      displayOrder: (json['displayOrder'] as num?)?.toInt() ?? 0,
+      displayOrder: json['displayOrder'] as int? ?? 0,
     );
 
 Map<String, dynamic> _$TraitModelToJson(TraitModel instance) =>

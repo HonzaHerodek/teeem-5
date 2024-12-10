@@ -8,6 +8,7 @@ class MockStepTypeRepository implements StepTypeRepository {
       name: 'Text',
       description: 'A simple text step',
       icon: 'text_fields',
+      color: '#4CAF50', // Green for text
       options: [
         StepTypeOption(
           id: 'text',
@@ -22,6 +23,7 @@ class MockStepTypeRepository implements StepTypeRepository {
       name: 'Image',
       description: 'An image with optional caption',
       icon: 'image',
+      color: '#2196F3', // Blue for images
       options: [
         StepTypeOption(
           id: 'imageUrl',
@@ -40,6 +42,7 @@ class MockStepTypeRepository implements StepTypeRepository {
       name: 'Code',
       description: 'A code snippet',
       icon: 'code',
+      color: '#9C27B0', // Purple for code
       options: [
         StepTypeOption(
           id: 'code',
@@ -73,6 +76,7 @@ class MockStepTypeRepository implements StepTypeRepository {
       name: 'Video',
       description: 'A video with optional description',
       icon: 'video_library',
+      color: '#F44336', // Red for video
       options: [
         StepTypeOption(
           id: 'videoUrl',

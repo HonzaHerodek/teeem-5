@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../data/models/post_model.dart';
 import 'rating_stars.dart';
 import 'post_header.dart';
-import 'animated_post_content.dart';
 import 'step_indicators.dart';
+import 'step_carousel.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -27,14 +27,14 @@ class PostCard extends StatefulWidget {
   State<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin {
+class _PostCardState extends State<PostCard>
+    with SingleTickerProviderStateMixin {
   int _currentStep = 0;
   bool _isHeaderExpanded = false;
-  bool _showContent = true;
-  bool _isAnimatingOut = false;
   bool _showMiniatures = false;
   late List<PostStep> _allSteps;
   late AnimationController _miniatureAnimation;
+  final PageController _pageController = PageController();
   static const double _shrunkHeaderHeight = 60.0;
 
   @override
@@ -67,26 +67,17 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _miniatureAnimation.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   void _handleHeaderExpandChange(bool expanded) {
     setState(() {
       _isHeaderExpanded = expanded;
-      _showMiniatures = expanded;
       if (expanded) {
-        _showContent = false;
-        _isAnimatingOut = true;
         _miniatureAnimation.forward();
       } else {
-        _isAnimatingOut = false;
-        _showContent = false;
         _miniatureAnimation.reverse();
-        Future.delayed(const Duration(milliseconds: 50), () {
-          if (mounted && !_isHeaderExpanded) {
-            setState(() => _showContent = true);
-          }
-        });
       }
     });
   }
@@ -99,7 +90,15 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     setState(() => _showMiniatures = false);
   }
 
+  void _handleStepSelected(int index) {
+    setState(() => _currentStep = index);
+  }
+
   bool get _shouldShowHeader {
+    return _currentStep == 0 || _currentStep == _allSteps.length - 1;
+  }
+
+  bool get _isFirstOrLastStep {
     return _currentStep == 0 || _currentStep == _allSteps.length - 1;
   }
 
@@ -167,7 +166,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 40), // Adjust visual center
+                  padding: const EdgeInsets.only(top: 40),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -205,16 +204,9 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
         ],
       );
     } else {
-      final step = widget.post.steps[index - 1];
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Center(
-          child: Text(
-            step.getContentValue('text') ?? '',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white),
-          ),
-        ),
+      return StepCarousel(
+        steps: [widget.post.steps[index - 1]],
+        showArrows: false,
       );
     }
   }
@@ -224,9 +216,9 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     final size = MediaQuery.of(context).size.width - 32;
     final headerHeight = _isHeaderExpanded ? size * 0.75 : _shrunkHeaderHeight;
     final remainingHeight = size - headerHeight;
-    final indicatorTop = _isHeaderExpanded 
-        ? headerHeight + (remainingHeight / 2) - 30 
-        : headerHeight - 16; // Changed from -24 to -16 to add space
+    final indicatorTop = _isHeaderExpanded
+        ? headerHeight + (remainingHeight / 2) - 30
+        : headerHeight - 16;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
@@ -274,35 +266,25 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Content layer with clipping
-              if (!_isHeaderExpanded || _isAnimatingOut)
-                Positioned.fill(
-                  child: ClipRect(
-                    child: AnimatedPostContent(
-                      isVisible: _showContent,
-                      isAnimatingOut: _isAnimatingOut,
-                      topOffset: 0,
-                      onAnimationComplete: _isAnimatingOut
-                          ? () => setState(() {
-                                _isAnimatingOut = false;
-                                _showContent = false;
-                              })
-                          : null,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return PageView.builder(
-                            itemCount: _allSteps.length,
-                            onPageChanged: (index) =>
-                                setState(() => _currentStep = index),
-                            itemBuilder: (context, index) => 
-                                _buildStepContent(index, constraints),
-                          );
-                        },
-                      ),
-                    ),
+              // PageView for step content
+              AnimatedOpacity(
+                opacity: _isHeaderExpanded ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 300),
+                child: IgnorePointer(
+                  ignoring: _isHeaderExpanded,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return PageView.builder(
+                        controller: _pageController,
+                        itemCount: _allSteps.length,
+                        onPageChanged: _handleStepSelected,
+                        itemBuilder: (context, index) =>
+                            _buildStepContent(index, constraints),
+                      );
+                    },
                   ),
                 ),
-              // Overlay layer for header and indicators
+              ),
               if (_shouldShowHeader)
                 Positioned(
                   top: 0,
@@ -322,19 +304,21 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
                     rating: widget.post.ratingStats.averageRating,
                   ),
                 ),
-              // Step indicators layer
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 top: indicatorTop,
                 left: 0,
                 right: 0,
-                child: _isHeaderExpanded || _showMiniatures
+                child: _isHeaderExpanded ||
+                        (_showMiniatures && !_isFirstOrLastStep)
                     ? StepMiniatures(
                         steps: _allSteps,
                         currentStep: _currentStep,
                         onHeaderExpandChanged: _handleHeaderExpandChange,
-                        onTransformToDots: _handleTransformToDots,
+                        onTransformToDots:
+                            _showMiniatures ? _handleTransformToDots : null,
+                        pageController: _pageController,
                       )
                     : StepDots(
                         steps: _allSteps,

@@ -12,13 +12,22 @@ class MockPostRepository implements PostRepository {
   }
 
   void _initializeTestPosts() {
+    _posts.clear(); // Clear existing posts before adding new ones
     final testData = TestDataService.generateTestPosts(count: 10);
     _posts.addAll(testData);
+  }
+
+  // Helper method to refresh test data
+  void refreshTestData() {
+    _initializeTestPosts();
   }
 
   @override
   Future<List<PostModel>> getPosts({int? limit, String? startAfter, String? userId, List<String>? tags}) async {
     await Future.delayed(_delay);
+    if (_posts.isEmpty) {
+      _initializeTestPosts(); // Reinitialize if empty
+    }
     return _posts;
   }
 

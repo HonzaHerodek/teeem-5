@@ -11,8 +11,8 @@ TargetingCriteria _$TargetingCriteriaFromJson(Map<String, dynamic> json) =>
       interests: (json['interests'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      minAge: (json['minAge'] as num?)?.toInt(),
-      maxAge: (json['maxAge'] as num?)?.toInt(),
+      minAge: json['minAge'] as int?,
+      maxAge: json['maxAge'] as int?,
       locations: (json['locations'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
