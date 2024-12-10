@@ -48,6 +48,8 @@ class _PostHeaderState extends State<PostHeader>
   static const double _starSize = 14.0;
   static const double _collapsedAvatarSize = 38.4;
   late final AnimationController _controller;
+  final ScrollController _scrollController = ScrollController();
+  double _dragStartY = 0;
 
   @override
   void initState() {
@@ -83,6 +85,7 @@ class _PostHeaderState extends State<PostHeader>
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -288,28 +291,31 @@ class _PostHeaderState extends State<PostHeader>
             left: 0,
             right: 0,
             child: Center(
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 2,
+              child: GestureDetector(
+                onTap: !widget.isExpanded ? () => widget.onExpandChanged(true) : null,
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 2,
+                    ),
                   ),
-                ),
-                child: ClipOval(
-                  child: Image.network(
-                    widget.userProfileImage!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.black,
-                      child: Center(
-                        child: Text(
-                          widget.username[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
+                  child: ClipOval(
+                    child: Image.network(
+                      widget.userProfileImage!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.black,
+                        child: Center(
+                          child: Text(
+                            widget.username[0].toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -325,34 +331,29 @@ class _PostHeaderState extends State<PostHeader>
   }
 
   Widget _buildRatingWithCount() {
-    return Stack(
-      clipBehavior: Clip.none,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        RatingStars(
-          rating: widget.rating,
-          size: 32,
-          color: Colors.amber,
-        ),
         if (_otherPosts != null)
-          Positioned(
-            top: -8,
-            right: -16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.amber,
-                borderRadius: BorderRadius.circular(10),
-              ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
               child: Text(
-                '${_otherPosts!.fold<int>(0, (sum, post) => sum + post.ratings.length)}',
+                '${_otherPosts!.fold<int>(0, (sum, post) => sum + post.ratings.length)} ratings',
                 style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 12,
+                  color: Colors.amber,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
+        RatingStars(
+          rating: widget.rating,
+          size: 32,
+          color: Colors.amber,
+        ),
       ],
     );
   }
@@ -413,71 +414,94 @@ class _PostHeaderState extends State<PostHeader>
                 builder: (context, child) {
                   return Opacity(
                     opacity: _controller.value == 1.0 ? 1.0 : 0.0,
-                    child: Positioned.fill(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 32),
-                          // Rating stars at the top with count
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: _buildRatingWithCount(),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 32),
+                        // Rating stars at the top with count
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: _buildRatingWithCount(),
+                        ),
+                        const Spacer(),
+                        // User traits in the middle
+                        if (widget.userTraits.isNotEmpty)
+                          UserTraits(
+                            traits: widget.userTraits,
+                            height: 40,
+                            itemWidth: 100,
+                            itemHeight: 40,
+                            spacing: 8,
                           ),
-                          const Spacer(),
-                          // User traits in the middle
-                          if (widget.userTraits.isNotEmpty)
-                            Padding(
+                        const Spacer(),
+                        // Other posts at the bottom
+                        if (_otherPosts != null && _otherPosts!.isNotEmpty)
+                          SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              controller: _scrollController,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: _otherPosts!.length,
                               padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: UserTraits(
-                                traits: widget.userTraits,
-                                height: 40,
-                                itemWidth: 100,
-                                itemHeight: 40,
-                                spacing: 8,
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              itemBuilder: (context, index) =>
+                                  _buildOtherPostThumbnail(
+                                _otherPosts![index],
                               ),
                             ),
-                          const Spacer(),
-                          // Other posts at the bottom
-                          if (_otherPosts != null && _otherPosts!.isNotEmpty)
-                            SizedBox(
-                              height: 100,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _otherPosts!.length,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                itemBuilder: (context, index) =>
-                                    _buildOtherPostThumbnail(
-                                  _otherPosts![index],
-                                ),
-                              ),
-                            )
-                          else if (_isLoadingPosts)
-                            const SizedBox(
-                              height: 100,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
+                          )
+                        else if (_isLoadingPosts)
+                          const SizedBox(
+                            height: 100,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white),
                               ),
                             ),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
+                          ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   );
                 },
               ),
-            Positioned.fill(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => widget.onExpandChanged(!widget.isExpanded),
+            // Gesture detector for vertical swipes
+            if (widget.isExpanded)
+              Positioned.fill(
+                child: GestureDetector(
+                  onVerticalDragStart: (details) {
+                    _dragStartY = details.globalPosition.dy;
+                  },
+                  onVerticalDragUpdate: (details) {
+                    final deltaY = details.globalPosition.dy - _dragStartY;
+                    if (deltaY < -20) { // Upward swipe
+                      widget.onExpandChanged(false);
+                    }
+                  },
                 ),
               ),
-            ),
+            // Gesture detector for swipe to expand in collapsed state
+            if (!widget.isExpanded)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 120, // Area for vertical swipe detection including dots
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onVerticalDragStart: (details) {
+                    _dragStartY = details.globalPosition.dy;
+                  },
+                  onVerticalDragUpdate: (details) {
+                    final deltaY = details.globalPosition.dy - _dragStartY;
+                    if (deltaY > 20) { // Downward swipe
+                      widget.onExpandChanged(true);
+                    }
+                  },
+                ),
+              ),
           ],
         ),
       ),

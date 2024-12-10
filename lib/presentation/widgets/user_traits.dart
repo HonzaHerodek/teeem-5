@@ -17,22 +17,6 @@ class UserTraits extends StatelessWidget {
     this.spacing = 8,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    // Only show first three traits in a single row
-    final displayTraits = traits.take(3).toList();
-
-    return SizedBox(
-      height: itemHeight,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: displayTraits.map((trait) => _buildTraitBubble(trait)).toList(),
-        ),
-      ),
-    );
-  }
-
   IconData? _parseIconData(String iconData) {
     try {
       final codePoint = int.parse(iconData, radix: 16);
@@ -58,7 +42,6 @@ class UserTraits extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // Icon container
           Container(
             width: itemHeight,
             height: itemHeight,
@@ -74,7 +57,6 @@ class UserTraits extends StatelessWidget {
               ),
             ),
           ),
-          // Text container
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -90,6 +72,26 @@ class UserTraits extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: itemHeight,
+      child: NotificationListener<OverscrollIndicatorNotification>(
+        onNotification: (overscroll) {
+          overscroll.disallowIndicator();
+          return true;
+        },
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: traits.length,
+          itemBuilder: (context, index) => _buildTraitBubble(traits[index]),
+        ),
       ),
     );
   }
