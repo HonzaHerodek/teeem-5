@@ -19,31 +19,27 @@ class UserTraits extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Split traits into two rows
-    final int midPoint = (traits.length / 2).ceil();
-    final firstRow = traits.take(midPoint).toList();
-    final secondRow = traits.skip(midPoint).toList();
+    // Only show first three traits in a single row
+    final displayTraits = traits.take(3).toList();
 
     return SizedBox(
-      height: height,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildTraitRow(firstRow),
-          SizedBox(height: spacing),
-          _buildTraitRow(secondRow),
-        ],
+      height: itemHeight,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: displayTraits.map((trait) => _buildTraitBubble(trait)).toList(),
+        ),
       ),
     );
   }
 
-  Widget _buildTraitRow(List<TraitModel> rowTraits) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: rowTraits.map((trait) => _buildTraitBubble(trait)).toList(),
-      ),
-    );
+  IconData? _parseIconData(String iconData) {
+    try {
+      final codePoint = int.parse(iconData, radix: 16);
+      return IconData(codePoint, fontFamily: 'MaterialIcons');
+    } catch (e) {
+      return null;
+    }
   }
 
   Widget _buildTraitBubble(TraitModel trait) {
@@ -72,10 +68,7 @@ class UserTraits extends StatelessWidget {
             ),
             child: Center(
               child: Icon(
-                IconData(
-                  int.parse(trait.iconData, radix: 16),
-                  fontFamily: 'MaterialIcons',
-                ),
+                _parseIconData(trait.iconData) ?? Icons.star,
                 color: Colors.white,
                 size: itemHeight * 0.6,
               ),

@@ -18,6 +18,7 @@ class PostHeader extends StatefulWidget {
   final String currentPostId;
   final Function(double)? onAnimationChanged;
   final List<TraitModel> userTraits;
+  final double rating;
 
   const PostHeader({
     super.key,
@@ -31,13 +32,15 @@ class PostHeader extends StatefulWidget {
     required this.currentPostId,
     this.onAnimationChanged,
     this.userTraits = const [],
+    required this.rating,
   });
 
   @override
   State<PostHeader> createState() => _PostHeaderState();
 }
 
-class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateMixin {
+class _PostHeaderState extends State<PostHeader>
+    with SingleTickerProviderStateMixin {
   List<PostModel>? _otherPosts;
   bool _isLoadingPosts = false;
   static const double _miniatureSize = 80.0;
@@ -53,13 +56,14 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _controller.addListener(() {
       widget.onAnimationChanged?.call(_controller.value);
     });
-    
+
     if (widget.isExpanded) {
       _controller.value = 1.0;
+      _fetchOtherPosts();
     }
   }
 
@@ -69,12 +73,10 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
     if (oldWidget.isExpanded != widget.isExpanded) {
       if (widget.isExpanded) {
         _controller.forward();
+        _fetchOtherPosts();
       } else {
         _controller.reverse();
       }
-    }
-    if (!oldWidget.isExpanded && widget.isExpanded) {
-      _fetchOtherPosts();
     }
   }
 
@@ -96,10 +98,11 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
         userId: widget.userId,
         limit: 10,
       );
-      
+
       if (mounted) {
         setState(() {
-          _otherPosts = posts.where((post) => post.id != widget.currentPostId).toList();
+          _otherPosts =
+              posts.where((post) => post.id != widget.currentPostId).toList();
           _isLoadingPosts = false;
         });
       }
@@ -192,9 +195,10 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(5, (index) {
                   final starValue = index + 1;
-                  final isHalfStar = post.ratingStats.averageRating > index && 
-                                   post.ratingStats.averageRating < starValue;
-                  final isFullStar = post.ratingStats.averageRating >= starValue;
+                  final isHalfStar = post.ratingStats.averageRating > index &&
+                      post.ratingStats.averageRating < starValue;
+                  final isFullStar =
+                      post.ratingStats.averageRating >= starValue;
 
                   return Icon(
                     isFullStar
@@ -214,10 +218,12 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
     );
   }
 
-  bool get _showProfilePicture => widget.currentStep == 0 || widget.currentStep == widget.steps.length - 1;
+  bool get _showProfilePicture =>
+      widget.currentStep == 0 || widget.currentStep == widget.steps.length - 1;
 
   Widget _buildProfilePicture(double headerHeight, double postSize) {
-    if (!_showProfilePicture || widget.userProfileImage == null) return Container();
+    if (!_showProfilePicture || widget.userProfileImage == null)
+      return Container();
 
     return AnimatedBuilder(
       animation: _controller,
@@ -241,17 +247,23 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
                   top: const Radius.circular(999),
                   bottom: Radius.circular(postSize / 2),
                 ),
-                child: Image.network(
-                  widget.userProfileImage!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.black,
-                    child: Center(
-                      child: Text(
-                        widget.username[0].toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withOpacity(0.4),
+                    BlendMode.darken,
+                  ),
+                  child: Image.network(
+                    widget.userProfileImage!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.black,
+                      child: Center(
+                        child: Text(
+                          widget.username[0].toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
@@ -312,6 +324,39 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
     );
   }
 
+  Widget _buildRatingWithCount() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        RatingStars(
+          rating: widget.rating,
+          size: 32,
+          color: Colors.amber,
+        ),
+        if (_otherPosts != null)
+          Positioned(
+            top: -8,
+            right: -16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.amber,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${_otherPosts!.fold<int>(0, (sum, post) => sum + post.ratings.length)}',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final postSize = MediaQuery.of(context).size.width - 32;
@@ -344,7 +389,8 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.vertical(
                         top: const Radius.circular(999),
-                        bottom: Radius.circular(widget.isExpanded ? postSize / 2 : 0),
+                        bottom: Radius.circular(
+                            widget.isExpanded ? postSize / 2 : 0),
                       ),
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -370,21 +416,25 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
                     child: Positioned.fill(
                       child: Column(
                         children: [
-                          const SizedBox(height: 24),
-                          // Rating stars at the top
-                          RatingStars(
-                            rating: 4.5,
-                            size: 32,
-                            color: Colors.amber,
+                          const SizedBox(height: 32),
+                          // Rating stars at the top with count
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: _buildRatingWithCount(),
                           ),
                           const Spacer(),
                           // User traits in the middle
                           if (widget.userTraits.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                               child: UserTraits(
                                 traits: widget.userTraits,
-                                height: 120,
+                                height: 40,
+                                itemWidth: 100,
+                                itemHeight: 40,
+                                spacing: 8,
                               ),
                             ),
                           const Spacer(),
@@ -395,8 +445,10 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: _otherPosts!.length,
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                itemBuilder: (context, index) => _buildOtherPostThumbnail(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                itemBuilder: (context, index) =>
+                                    _buildOtherPostThumbnail(
                                   _otherPosts![index],
                                 ),
                               ),
@@ -406,7 +458,8 @@ class _PostHeaderState extends State<PostHeader> with SingleTickerProviderStateM
                               height: 100,
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               ),
                             ),

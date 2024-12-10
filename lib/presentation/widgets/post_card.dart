@@ -3,6 +3,7 @@ import '../../data/models/post_model.dart';
 import 'rating_stars.dart';
 import 'post_header.dart';
 import 'animated_post_content.dart';
+import 'step_indicators.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -196,7 +197,11 @@ class _PostCardState extends State<PostCard> {
           ),
         ],
       ),
-      child: ClipOval(
+      child: Container(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Container(
           color: Colors.black.withOpacity(0.5),
           child: Stack(
@@ -221,7 +226,7 @@ class _PostCardState extends State<PostCard> {
                     itemBuilder: (context, index) => _buildStepContent(index),
                   ),
                 ),
-              // Header (always on top)
+              // Header
               Positioned(
                 top: 0,
                 left: 0,
@@ -254,8 +259,48 @@ class _PostCardState extends State<PostCard> {
                   userId: widget.post.userId,
                   currentPostId: widget.post.id,
                   userTraits: widget.post.userTraits,
+                  rating: widget.post.ratingStats.averageRating,
                 ),
               ),
+              // Step dots (only visible when header is shrinked)
+              if (!_isHeaderExpanded)
+                Positioned(
+                  top: headerHeight - 32,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.5),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                    child: StepDots(
+                      steps: _allSteps,
+                      currentStep: _currentStep,
+                      animation: const AlwaysStoppedAnimation(1.0),
+                    ),
+                  ),
+                ),
+              // Step miniatures (visible when header is expanded)
+              if (_isHeaderExpanded && !_showContent)
+                Positioned(
+                  top: headerHeight + 16,
+                  left: 0,
+                  right: 0,
+                  bottom: 16,
+                  child: Center(
+                    child: StepMiniatures(
+                      steps: _allSteps,
+                      currentStep: _currentStep,
+                      animation: const AlwaysStoppedAnimation(1.0),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
